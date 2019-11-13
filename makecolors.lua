@@ -83,7 +83,7 @@ local function get_average_image_file_color(name)
 	return unpack(image_colors_cache[name])
 end
 
-local function get_average_overlays_color(overlays)
+local function get_average_overlays_color(overlays, nodename)
 	local r, g, b, a = 0, 0, 0, 0
 	for _, overlay in ipairs(overlays) do
 		if overlay:sub(1,1) == "[" then
@@ -101,10 +101,8 @@ local function get_average_overlays_color(overlays)
 
 			-- TODO: Manage effects here
 			if effect == "colorize" then
-				print()
-				print("COLOR=",params[1])
-				print()
 			end
+			print(string.format("Node %s, ignored effect %s", nodename, effect))
 		else
 			local rr, gg, bb, aa = get_average_image_file_color(overlay)
 			if aa > 0 then
@@ -118,18 +116,6 @@ local function get_average_overlays_color(overlays)
 	end
 	return r, g, b, a
 end
-
---[[
-local function render_overlay(overlays)
-
-
-	if overlay:sub(1,1) == "[" then
-		return --TODO:manage effects
-	end
-	local path = find_file(overlay)
-	if path
-end
-]]
 
 local function strip_surrounding_braces(str)
 	if #str < 2 then
@@ -199,8 +185,15 @@ local function print_table(table, level)
 	end
 end
 
+local outputfile = "colors.txt"
 local drawtypes = {}
 local count = 0
+
+local file = io.open(outputfile, "w")
+if not file then
+	print("Unable to open " .. outputfile .. " for writing!")
+	return
+end
 
 for name, ndef in pairs(nodes) do
 	if ndef.drawtype ~= "airlike" then
@@ -223,10 +216,14 @@ for name, ndef in pairs(nodes) do
 		end
 
 		if overlays then
-			r, g, b, a = get_average_overlays_color(overlays)
-			print(string.format("%s %d %d %d", name, r*rgbconv, g*rgbconv, b*rgbconv))
+			r, g, b, a = get_average_overlays_color(overlays, name)
+			file:write(string.format("%s %d %d %d\n", name, r*rgbconv, g*rgbconv, b*rgbconv))
 		end
 
 		count = count + 1
 	end
 end
+
+file:close()
+
+print(string.format("File %s generated with %d nodes.", outputfile, count))
