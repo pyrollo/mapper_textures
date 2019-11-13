@@ -2,10 +2,18 @@ minetest.register_chatcommand("dump_node_info", {
 	params = "",
 	description = "Dump node info to json files for mapper",
 	func = function(name, param)
+
 		local mods = {}
+		for _, name in ipairs(minetest.get_modnames()) do
+			local path = minetest.get_modpath(name)
+			if path then
+				mods[name] = path
+			end
+		end
+
 		local nodes = {}
 		for name, ndef in pairs(minetest.registered_nodes) do
-			mods[ndef.mod_origin] = minetest.get_modpath(ndef.mod_origin)
+--			mods[ndef.mod_origin] = minetest.get_modpath(ndef.mod_origin) or "PATH_NOT_FOUND"
 			nodes[name] = {
 				name = ndef.name,
 				drawtype = ndef.drawtype,
@@ -29,5 +37,7 @@ minetest.register_chatcommand("dump_node_info", {
 			file:write(minetest.write_json(nodes))
 			file:close()
 		end
+
+		minetest.chat_send_player(name, "Node info dumped")
 	end,
 })
